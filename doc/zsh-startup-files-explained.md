@@ -10,11 +10,11 @@ However, zsh is very flexible, so the location of the global config files (via c
 Checking `$ZDOTDIR` is easy (and left as an exercise for the reader). Note, if `$ZDOTDIR` isn't set, `$HOME` is the default location for per-user-config files.
 
 Checking for the global location takes a little trick:
-`
+```
 zsh% strings =zsh | grep zshrc
 /etc/zsh/zshrc
 .zshrc
-`
+```
 
 See? That's the output on a debian System, where the global configs are put in `/etc/zsh/`.
 
@@ -22,13 +22,13 @@ See? That's the output on a debian System, where the global configs are put in `
 
 
 If you do not know what an interactive shell or a login shell is, **please** read [chapter 2 of the users guide](http://zsh.sf.net/Guide/zshguide02.html#l6) (at least 2.1). I know people are impatient, so a here's quick way of testing, if you are in a login shell: 
-`
+```
 if [[ -o login ]] ; then
   echo login shell
 else
   echo _no_ login shell
 fi
-`
+```
 
 Yes, you can test for interactive shells in the same way.
 

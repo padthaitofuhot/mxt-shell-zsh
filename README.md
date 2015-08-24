@@ -1,23 +1,29 @@
 # mxt-shell-zsh
-A set of scripts and utilities to help switch MobaXTerm's local shell to zsh and replace MobaTek's bash scripts.
+A set of scripts and utilities to help switch MobaXTerm's local shell to zsh (or anything, really) and replace MobaXTerm's unique bash scripts with zsh functional equivalents.
 
-## The problem
+## What's the problem?
 
-[MobaXTerm](http://mobaxterm.mobatek.net/), a splendidly amazing tool from the French company MobaTek, is a multi-protocol, tabbed, mostly-open-source Delphi program for Windows that contains an embedded Cygwin x86 instance. This is most excellent. However, the default local shell is bash4 and is not configurable, so we can't make zsh our default login shell. *Until now...*
+[MobaXTerm](http://mobaxterm.mobatek.net/), also known as MXT, is a splendidly amazing tool from the French company MobaTek. It is a multi-protocol, tabbed, mostly-open-source Windows Delphi program for remote access. It supports SSH, MoSH, RDP, and many others. Of relevance to this repo is that MXT contains an embedded Cygwin x86 instance. The default local shell is bash4, and MobaTek's treatment of the bash4 environment is as pragmatic as it is beautiful, and demonstrates the cross-platform intelligence MobaTek brings to bear on MXT as a solid product. If you just want a fast, local, light-duty Cygwin, the default MobaXTerm is the right way to go. If you're like me and can't leave well-enough alone, however, you will quickly discover that the default login shell is not configurable, so we can't make zsh our shell. *Until now...*
 
-## What mad science are we doing here?
+## What mad science is this?
 
-***For starters, we are gleefully touching important system files!*** Under MobaXterm (and some cygwin installs) /etc/shells does not exist. We'll create one of those too if we need to, otherwise update it. Cygwin in general lacks a chsh, so we work around that updating /etc/passwd by hand or generating one if it doesn't exist. We'll do the same for /etc/nsswitch.conf.
+***For starters, we are gleefully touching important system files!*** Under MobaXterm (and some cygwin installs) /etc/shells does not exist. We'll create one of those too if we need to, otherwise update it. Cygwin in general [lacks a chsh](https://github.com/robbyrussell/oh-my-zsh/issues/3588), so we work around that updating /etc/passwd by hand or generating one if it doesn't exist. We'll do the same for /etc/nsswitch.conf.
 
-***We are also installing unsigned code from dubious sources!*** Under MobaXTerm the default login shell CANNOT be changed (as of version 8.1) through the normal means every *nix nerd in the last 20+ years has come to expect from a unix-like environment. MobaXTerm is hard-coded to invoke bash.exe as the local cygwin shell, so if you really want zsh as your default we have have to work around that by changing the cygtermd.exe MobaXTerm uses to invoke the login shell. Read on for more info.
+***We are adding and changing shell profile files!*** Since MXT does not include zsh, we have to set up all of the zsh environment files for the login, interactive, and script shell invocations. This repo in particular seeks to set up a zsh environment at least as Quality as MobaTek's, and the basis of that road is... Undecided.
+    The popular [oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh) framework?
+    The less bloated antigen?
+    A faster antigen rethink like antigen-hs?
+    Holman's topical dotfiles setup?
+
+***We are also installing unsigned code from dubious sources!*** Under MobaXTerm the default login shell CANNOT be changed ([as of version 8.1](http://blog.mobatek.net/)) through the normal means every *nix nerd in the last 20+ years has come to expect from a unix-like environment. MobaXTerm is hard-coded to invoke bash.exe as the local cygwin shell, so if you really want zsh as your default we have have to work around that by changing the cygtermd.exe MobaXTerm uses to invoke the login shell. Read on for more info.
 
 There is, of course, no guarantee, that any of this will work. It may very well detroit your MobaXTerm installation and sell your loved-ones into slavery. But it works great for me in MobaXTerm 8.1 Pro under Windows 7 x64. Obviously, YMMV.
 
-## This sounds like a terrible idea, why are you doing it?
+## This sounds like a terrible idea?
 
 I'm doing this because I'm a snob and prefer zsh over bash. I'm not willing to give up MobaXTerm, and MobaXTerm has not yet provided a supported path for changing the default login shell.
 
-## What's up with that anyway?
+## How does one force MXT to respect the shell in /etc/passwd?
 
 So the deal is, MobaXTerm invokes bash from its own PuTTY codebase they call "MoTTY". MoTTY calls Simon Tatham's cygtermd.exe, which is a telnet-to-pty proxy originally intended for running Cygwin sessions within PuTTY. MobaXTerm hard-codes the MoTTY session call to cygtermd.exe via a randomly-named tmp file every time it's called, and the shell's path is always set to /bin/bash.exe. Right?
 
@@ -28,23 +34,24 @@ Since we are prohibited by MobaXTerm's licenses (pro users only) from modifying 
 3. Go straight to /etc/passwd to find the user's configured shell.
 4. Pass any other command line arguments given to cygtermd right to whatever shell we picked out, because "-l -i" are supported by most shells I like using anyway.
 
-## DISCLAIMER OF LIABILITY
-
-**THERE IS NO GUARANTEE OF ANY KIND, WARRANTY OF ANY KIND, NOR ANY OTHER INDICATION, EXPRESSED OR IMPLIED, THAT THIS PROCEDURE WILL PRODUCE A NET POSITIVE OUTCOME. IT MAY VERY WELL CAUSE YOUR MOBAXTERM INSTALLATION TO BREAK, LOSE DATA, OR OTHERWISE SEND YOU INTO THE HOWLING FANTODS OF REMORSE AND REGRET. YOU HAVE BEEN SO WARNED. BY EXECUTING THIS SCRIPT YOU CONSENT TO WHATEVER OUTCOME MAY ARISE FROM ITS EXECUTION, AND AGREE THAT BY EXECUTING THIS SCRIPT YOU ARE IN LEGAL FACT CONSENTING TO THE EXECUTION OF THIS SCRIPT AT YOUR OWN RISK AND PERIL, SO HELP YOU GOD, HOWEVER YOU DO OR DO NOT CONCEIVE IT TO BE.  THIS DISCLAIMER MAY BE SUPERSEDED BY, DEPRECATED BY, OR OTHERWISE OVERRIDDEN BY THE MUCH BETTER WRITTEN DISCLAIMER OF LIABILITY CONTAINED WITHIN THE ACTUAL SOFTWARE LICENSE WHICH CAN BE FOUND IN THE LICESNSE FILE AT THE PROJECT ROOT.**
-
 *Oh, the things we do for love...*
 
-## .... to do.......
-
 ## A patched cygtermd
-
+In src/cygtermd is a copy of Simon Tatham's cygtermd.exe source code. It has been modified to respect the contents of /etc/passwd, or, failing that, fall back to /bin/sh. It simply replaces the command line argument it's given as the requested shell with the contents of the user's /etc/passwd line.
 
 ## A replacement shell profile
 
 
 ## An installer for the whole shebang
 
+
 ### Steps involved
 * Generate /etc/passwd, /etc/group, and /etc/nsswitch.conf if they don't already exist
 * Update the above files to point the local console login shell for your user account to /bin/zsh
 * 
+
+# Known issues
+
+1. Any updates to the zsh package through the Cygwin setup*.exe program will no longer update /etc/zprofile
+2. The MXT /etc/custom.profile will not be loaded
+3. 

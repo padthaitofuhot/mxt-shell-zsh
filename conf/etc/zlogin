@@ -1,0 +1,17 @@
+# mxt-shell-zsh
+
+#
+# zlogin
+#
+
+# Setup some default paths. Note that this order will allow user installed
+# software to override 'system' software.
+# Modifying these default path settings can be done in different ways.
+# To learn more about startup files, refer to your shell's man page.
+
+: ${ORIGINAL_PATH=${PATH}}
+if [ ${CYGWIN_NOWINPATH-addwinpath} = "addwinpath" ] ; then
+    PATH="/usr/local/bin:/usr/bin${PATH:+:${PATH}}"
+else
+    PATH="/usr/local/bin:/usr/bin"
+fi

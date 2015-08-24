@@ -1,0 +1,12 @@
+V="v${VERSION}"
+T="${TERMNUM}"; while [ ${#T} -lt 4 ]; do T="${T} "; done
+builtin echo -e "\033[0m     \e(0lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk\e(B
+     \e(0x\e(B                  \033[32m\e(0\`\e(B MobaXterm Professional v${VERSION} \e(0\`\e(B\033[0m                   \e(0x\e(B
+     \e(0x\e(B             \033[33m(X server, SSH client and network tools)\033[0m               \e(0x\e(B
+     \e(0x\e(B                                                                    \e(0x\e(B
+     \e(0x\e(B \e(0b\e(B Your computer drives are accessible through the \033[35m/drives\033[0m path     \e(0x\e(B
+     \e(0x\e(B \e(0b\e(B Your DISPLAY is set to \033[35m${EXPORTED_DISPLAY}\033[0m                       \e(0x\e(B
+     \e(0x\e(B \e(0b\e(B When using \033[35mSSH\033[0m, your remote DISPLAY is automatically forwarded   \e(0x\e(B
+     \e(0x\e(B \e(0b\e(B Each command status is specified by a special symbol (\033[32m\e(0d\e(B\033[0m or \033[31m\e(0e\e(B\033[0m)    \e(0x\e(B
+     \e(0x\e(B \e(0b\e(B For more info, type \033[35mhelp\033[0m or click on the help button above.      \e(0x\e(B
+     \e(0mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj\e(B"

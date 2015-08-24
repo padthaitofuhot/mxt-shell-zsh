@@ -1,0 +1,12 @@
+# mxt-shell-zsh
+
+#
+# zshenv - Keep it tiny!
+#
+
+# No coredumps
+ulimit -c 0
+
+# "sane default"
+TERM="xterm"
+export TERM

@@ -1,0 +1,248 @@
+# mxt-shell-zsh
+# |- derived from zsh version 5.0.8 (i686-pc-cygwin)
+#    |- derived from base-files version 4.2-3
+
+#
+# zprofile
+#
+
+
+if [ -z "${PROFILEREAD+true}" ] ; then
+
+[ -e /etc/custom.welcome ] && /etc/custom.welcome
+
+# No mail here.
+unset MAILCHECK
+
+# see https://cygwin.com/ml/cygwin/2014-05/msg00352.html
+# MANPATH="/usr/local/man:/usr/share/man:/usr/man${MANPATH:+:${MANPATH}}"
+  INFOPATH="/usr/local/info:/usr/share/info:/usr/info${INFOPATH:+:${INFOPATH}}"
+
+  # Set the user id
+  USER="$USERNAME"
+
+  # Set the home directory
+  HOME="/home/$USER"
+
+  # TMP and TEMP as defined in the Windows environment
+  # can have unexpected consequences for cygwin apps, so we define
+  # our own to match GNU/Linux behaviour.
+  unset TMP TEMP
+  TMP="/tmp"
+  TEMP="/tmp"
+
+  # Define default printer
+  p='/proc/registry/HKEY_CURRENT_USER/Software/Microsoft/Windows NT/CurrentVersion/Windows/Device'
+  if [ -e "${p}" ] ; then
+    read -r PRINTER < "${p}"
+    PRINTER=${PRINTER%%,*}
+  fi
+  unset p
+
+  # Default to removing the write permission for group and other
+  #  (files normally created with mode 777 become 755; files created with
+  #  mode 666 become 644)
+  umask 022
+
+  # Here is how HOME is set, in order of priority, when starting from Windows
+  #  1) From existing HOME in the Windows environment, translated to a Posix path
+  #  2) from /etc/passwd, if there is an entry with a non empty directory field
+  #  3) from HOMEDRIVE/HOMEPATH
+  #  4) / (root)
+  # If the home directory doesn't exist, create it.
+  if [ ! -d "${HOME}" ]; then
+    if mkdir -p "${HOME}"; then
+      echo "Copying skeleton files."
+      echo "These files are for the users to personalise their cygwin experience."
+      echo
+      echo "They will never be overwritten nor automatically updated."
+      echo
+      if ! cd /etc/skel; then
+        echo "WARNING: Failed attempt to cd into /etc/skel!"
+      else
+        /usr/bin/find . -type f |
+	  while read f; do
+            fDest=${f#.}
+            if [ ! -e "${HOME}${fDest}" -a ! -L "${HOME}${fDest}" ]; then
+              /usr/bin/install -D -p -v "${f}" "${HOME}/${fDest}"
+            fi
+          done
+        unset fDest
+      fi
+    else
+      echo "${HOME} could not be created."
+      { [ -d "${TEMP}" ] && HOME="${TEMP}"; } ||
+      { [ -d "${TMP}" ] && HOME="${TMP}"; } ||
+      { [ -d /tmp ] && HOME=/tmp; } ||
+      HOME=/
+      echo "Setting HOME to ${HOME}."
+    fi
+  fi
+
+  readonly PROFILEREAD=true
+fi
+
+# Make sure we start in home unless invoked by CHERE
+if [ ! -z "${CHERE_INVOKING}" ]; then
+  unset CHERE_INVOKING
+else
+  cd "${HOME}" || echo "WARNING: Failed attempt to cd into ${HOME}!"
+fi
+
+# Shell dependent settings
+profile_d ()
+{
+  _LC_ALL_SET_="${LC_ALL+set}"
+  _LC_SAVE_="${LC_ALL-null}"
+  LC_ALL=C
+  if [ "${_LC_SAVE_}" = "null" ]; then
+    for file in /etc/profile.d/*.$1; do
+      [ -e "${file}" ] && . "${file}"
+    done
+    unset LC_ALL
+  else
+    for file in /etc/profile.d/*.$1; do
+      [ -e "${file}" ] && LC_ALL="${_LC_SAVE_}" . "${file}"
+    done
+    LC_ALL="${_LC_SAVE_}"
+  fi
+  unset file
+  unset _LC_ALL_SET_
+  unset _LC_SAVE_
+}
+
+HOSTNAME="$(/usr/bin/hostname)"
+
+profile_d zsh
+if [ ! "x${BASH_VERSION}" = "x"  ]; then
+  [ -f "/etc/bash.bashrc" ] && . "/etc/bash.bashrc"
+elif [ ! "x${KSH_VERSION}" = "x" ]; then
+  typeset -l HOSTNAME="$(/usr/bin/hostname)"
+  [ "${PS1-null}" = "null" ] || PS1=$(print '\033]0;${PWD}\n\033[32m${USER}@${HOSTNAME} \033[33m${PWD/${HOME}/~}\033[0m\n$ ')
+elif [ ! "x${ZSH_VERSION}" = "x" ]; then
+  # zsh is in shell compatibility mode here, so we probably shouldn't do this
+  profile_d zsh
+elif [ ! "x${POSH_VERSION}" = "x" ]; then
+  : # [ "${PS1-null}" = "null" ] || PS1="$ "
+else
+  : # [ "${PS1-null}" = "null" ] || PS1="$ "
+fi
+
+# Check to see if mkpasswd/mkgroup needs to be run try and cut down the emails
+#   about this on the lists!
+#
+# The following are the conditions under which the group name special cases
+#   will appear (where uid and gid are the effective user and group ids
+#   for the current user, and pgsid is the primary group associated with the
+#   SID for the current user):
+#       mkpasswd:
+#         gid is not in /etc/group
+#         uid is not in /etc/passwd
+#       passwd/group_GID_clash(<gid>/<pgsid>):
+#         gid is not in /etc/group
+#         uid is in /etc/passwd
+#         pgsid is in /etc/group (and does not match gid)
+#       mkgroup:
+#         gid is not in /etc/group
+#         uid is in /etc/passwd
+#         pgsid is not in /etc/group
+#
+# If this message keeps appearing and you are sure it's a mistake (ie, don't
+#   email about it!), comment out the test below.
+case "$(/usr/bin/id -ng)" in
+mkpasswd )
+  echo "Your group is currently \"mkpasswd\".  This indicates that your"
+  echo "gid is not in /etc/group and your uid is not in /etc/passwd."
+  echo
+  echo "The /etc/passwd (and possibly /etc/group) files should be rebuilt."
+  echo "See the man pages for mkpasswd and mkgroup then, for example, run"
+  echo
+  echo "mkpasswd -l [-d] > /etc/passwd"
+  echo "mkgroup  -l [-d] > /etc/group"
+  echo
+  echo "Note that the -d switch is necessary for domain users."
+  ;;
+passwd/group_GID_clash* )
+  echo "Your group is currently \"passwd/group_GID_clash(gid/pgsid)\".  This"
+  echo "indicates that your gid is not in /etc/group, but the pgsid (primary "
+  echo "group associated with your SID) is in /etc/group."
+  echo
+  echo "The /etc/passwd (and possibly /etc/group) files should be rebuilt."
+  echo "See the man pages for mkpasswd and mkgroup then, for example, run"
+  echo
+  echo "mkpasswd -l [-d] > /etc/passwd"
+  echo "mkgroup  -l [-d] > /etc/group"
+  echo
+  echo "Note that the -d switch is necessary for domain users."
+  ;;
+mkgroup )
+  echo "Your group is currently \"mkgroup\".  This indicates that neither"
+  echo "your gid nor your pgsid (primary group associated with your SID)"
+  echo "is in /etc/group."
+  echo
+  echo "The /etc/group (and possibly /etc/passwd) files should be rebuilt."
+  echo "See the man pages for mkpasswd and mkgroup then, for example, run"
+  echo
+  echo "mkpasswd -l [-d] > /etc/passwd"
+  echo "mkgroup  -l [-d] > /etc/group"
+  echo
+  echo "Note that the -d switch is necessary for domain users."
+  ;;
+esac
+
+# TODO: find zsh equivalents for the items below
+HISTFILE=/home/mobaxterm/.zsh_history
+HISTSIZE=36000
+TMOUT=0
+export HISTFILE HISTSIZE TMOUT
+
+# No case globbing on Windows
+unsetopt CASE_GLOB
+
+# Ignore duplicate history items
+setopt HIST_IGNORE_DUPS
+
+# Enable globbing . files
+setopt dotglob
+
+# Add HOME and END key support for MinTTY, PuTTY, and derivatives
+bindkey '\e[H' beginning-of-line
+bindkey '\e[F' end-of-line
+
+# Load MXT session aliases even in zsh
+[ -e "/etc/sessionsaliases.sh" ] && . /etc/sessionsaliases.sh
+
+# Load MXT common aliases
+[ -e "/etc/baseprofile" ] && . /etc/baseprofile
+# Work around MXT's ToolNotIncluded feature for zsh
+unalias zsh
+
+# If you've ported your custom.profile to zsh, place the contents in /etc/custom.zprofile
+[ -e "/etc/custom.zprofile" ] && . /etc/custom.zprofile
+
+[ -d "/home/mobaxterm/" ] || mkdir -p /home/mobaxterm
+[ -d "/home/$USERNAME/" ] || ln -sf /home/mobaxterm "/home/$USERNAME" 2>/dev/null
+[ -n "$MOBASTARTUPDIR" ] && cd "${MOBASTARTUPDIR}" 2>/dev/null || cd "/home/$USERNAME" 2>/dev/null
+
+SHELL="/bin/zsh.exe"
+
+# Configure OpenGL support for local XOrg server
+LIBGL_ALWAYS_INDIRECT=1
+
+# Some terminal games can't handle 256 color TERM types
+# Can't use screen-256color because it conflicts with some
+# window tab settings.
+# Can't use putty-256color because MoTTY (PuTTY) is in xterm
+# mode.
+
+# NOTE: These apply to MXT version 8.x+. You may need to
+# add more 256-color exclusions for lesser versions.
+#case "$BASH_EXECUTION_STRING" in
+#
+#        *ctris*) TERM="xterm";;
+#    *ninvaders*) TERM="xterm";;
+#              *) TERM="xterm-256color";;
+#esac
+
+export TMP TEMP SHELL VERSION DISPLAY PS1 PROMPT_COMMAND HISTTIMEFORMAT LIBGL_ALWAYS_INDIRECT
+export PROFILEREAD INFOPATH USER TMP TEMP PRINTER HOSTNAME PS1 SHELL TERM tmp temp

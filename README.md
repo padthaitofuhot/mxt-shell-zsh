@@ -21,7 +21,7 @@ There is, of course, no guarantee, that any of this will work. It may very well 
 
 ## This sounds like a terrible idea?
 
-I'm doing this because I'm a snob and prefer zsh over bash. I'm not willing to give up MobaXTerm, and MobaXTerm has not yet provided a supported path for changing the default login shell.
+~I'm doing this because I'm a snob and prefer zsh over bash.~ I did this because I was a snob and preferred zsh for a hot minute.  I'm not willing to give up MobaXTerm, and MobaXTerm has not yet provided a supported path for changing the default login shell.
 
 ## How does one force MXT to respect the shell in /etc/passwd?
 
